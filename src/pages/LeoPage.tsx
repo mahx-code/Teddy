@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Sidebar, TopNav } from "../components/Navigation";
 import { usePuterStorage } from "../hooks/usePuterStorage";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
 import { Send, Loader2, Sparkles, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,8 +14,6 @@ interface Message {
 export function LeoPage() {
   const { transactions } = usePuterStorage();
   const { user } = useAuth();
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const username = user?.username || "there";
 
   const [messages, setMessages] = useState<Message[]>([
@@ -40,11 +37,6 @@ export function LeoPage() {
 
   const buildSystemPrompt = () => {
     const now = new Date();
-    const currentMonth = now.toLocaleDateString(undefined, {
-      month: "long",
-      year: "numeric",
-    });
-
     // Calculate comprehensive statistics
     const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -126,13 +118,41 @@ Start by answering the user's question directly using the data above.`;
     setInput("");
     setIsLoading(true);
 
+    // Prepare the messages for the API
+    // 1. System Prompt with Context
+    const systemMessage = {
+      role: "system",
+      content: buildSystemPrompt(),
+    };
+
+    // 2. History (excluding the current user message being added now)
+    const historyMessages = messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    // 3. Current User Message
+    const currentUserMessage = {
+      role: "user",
+      content: input.trim(),
+    };
+
+    // Combine into full conversation
+    // Note: Puter/OpenAI expects an array of messages as the first argument for chat history
+    const apiMessages = [systemMessage, ...historyMessages, currentUserMessage];
+
     try {
-      const response = await puter.ai.chat(input.trim(), {
+      // Debug: Log the context data being sent
+      console.log("Leo Context Data:", {
+        transactionCount: transactions.length,
+        systemPrompt: systemMessage.content,
+      });
+
+      // Pass the ARRAY of messages as the FIRST argument
+      // This ensures the System Prompt is respected
+      // @ts-ignore - Puter types might expect string, but array is supported
+      const response = await puter.ai.chat(apiMessages, {
         model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: buildSystemPrompt() },
-          ...messages.map((m) => ({ role: m.role, content: m.content })),
-        ],
       });
 
       const assistantMessage: Message = {
@@ -159,52 +179,31 @@ Start by answering the user's question directly using the data above.`;
   };
 
   return (
-    <div
-      className={`min-h-screen flex ${isDark ? "bg-zinc-950" : "bg-slate-50"}`}
-    >
+    <div className="min-h-screen flex bg-[var(--color-bg-main)]">
       <Sidebar />
       <main className="flex-1 ml-64 min-h-screen flex flex-col">
         <TopNav />
 
         <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full p-8">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center">
               <Sparkles className="w-7 h-7 text-white" />
             </div>
             <div>
-              <h1
-                className={`text-2xl font-bold ${
-                  isDark ? "text-zinc-100" : "text-slate-900"
-                }`}
-              >
+              <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
                 Leo
               </h1>
-              <p
-                className={`text-sm ${
-                  isDark ? "text-zinc-500" : "text-slate-500"
-                }`}
-              >
+              <p className="text-sm text-[var(--color-text-muted)]">
                 Your AI Financial Advisor
               </p>
             </div>
-            <div
-              className={`ml-auto text-xs px-3 py-1.5 rounded-full ${
-                isDark
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-emerald-50 text-emerald-700"
-              }`}
-            >
+            <div className="ml-auto text-xs px-3 py-1.5 rounded-full bg-[var(--color-bg-income-tag)] text-[var(--color-status-success)]">
               {transactions.length} transactions loaded
             </div>
           </div>
 
-          <div
-            className={`flex-1 rounded-3xl p-6 mb-6 overflow-y-auto max-h-[60vh] ${
-              isDark
-                ? "bg-zinc-900 border border-zinc-800"
-                : "bg-white border border-slate-100 shadow-sm"
-            }`}
-          >
+          <div className="flex-1 rounded-3xl p-6 mb-6 overflow-y-auto max-h-[60vh] bg-[var(--color-bg-card)] border border-[var(--color-border-standard)] relative">
+            {/* Added relative to container to help spacing */}
             <AnimatePresence>
               {messages.map((message) => (
                 <motion.div
@@ -216,17 +215,15 @@ Start by answering the user's question directly using the data above.`;
                   }`}
                 >
                   {message.role === "assistant" && (
-                    <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center shrink-0">
                       <Bot className="w-4 h-4 text-white" />
                     </div>
                   )}
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       message.role === "user"
-                        ? "bg-indigo-600 text-white"
-                        : isDark
-                        ? "bg-zinc-800 text-zinc-200"
-                        : "bg-slate-100 text-slate-800"
+                        ? "bg-[var(--color-btn-primary-bg)] text-[var(--color-btn-primary-text)]"
+                        : "bg-[var(--color-btn-secondary-bg)] text-[var(--color-btn-secondary-text)]"
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">
@@ -239,48 +236,30 @@ Start by answering the user's question directly using the data above.`;
 
             {isLoading && (
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-lg bg-linear-to-tr from-violet-500 to-fuchsia-500 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div
-                  className={`rounded-2xl px-4 py-3 ${
-                    isDark ? "bg-zinc-800" : "bg-slate-100"
-                  }`}
-                >
-                  <Loader2
-                    className={`w-5 h-5 animate-spin ${
-                      isDark ? "text-zinc-400" : "text-slate-400"
-                    }`}
-                  />
+                <div className="rounded-2xl px-4 py-3 bg-[var(--color-btn-secondary-bg)]">
+                  <Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-muted)]" />
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          <div
-            className={`flex gap-4 p-4 rounded-2xl ${
-              isDark
-                ? "bg-zinc-900 border border-zinc-800"
-                : "bg-white border border-slate-100 shadow-sm"
-            }`}
-          >
+          <div className="flex gap-4 p-4 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border-standard)]">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
               placeholder="Ask Leo anything about your finances..."
-              className={`flex-1 bg-transparent outline-none text-sm ${
-                isDark
-                  ? "text-zinc-200 placeholder-zinc-500"
-                  : "text-slate-800 placeholder-slate-400"
-              }`}
+              className="flex-1 bg-transparent outline-none text-sm text-[var(--color-text-body)] placeholder-[var(--color-text-placeholder)]"
             />
             <button
               onClick={sendMessage}
               disabled={isLoading || !input.trim()}
-              className="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-10 h-10 rounded-xl bg-[var(--color-btn-primary-bg)] hover:bg-[var(--color-btn-primary-hover)] text-white flex items-center justify-center disabled:bg-[var(--color-btn-disabled-bg)] disabled:text-[var(--color-btn-disabled-text)] disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-5 h-5" />
             </button>

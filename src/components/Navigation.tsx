@@ -74,7 +74,7 @@ export function Sidebar() {
             : "border-slate-100 text-slate-400"
         }`}
       >
-        © Powered by <a href="https://puter.com" target="_blank">Puter</a>
+        © Powered by <a href="https://docs.puter.com" target="_blank">Puter.js</a>
       </div>
     </div>
   );
