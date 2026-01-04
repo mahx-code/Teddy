@@ -1,17 +1,29 @@
+import { useState } from "react";
 import { Sidebar, TopNav } from "../components/Navigation";
+import { TransactionForm } from "../components/TransactionForm";
 import { usePuterStorage } from "../hooks/usePuterStorage";
 import { useTheme } from "../context/ThemeContext";
-import { Trash2, Loader2, Receipt } from "lucide-react";
+import { Trash2, Loader2, Receipt, AlertTriangle, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function TransactionsPage() {
-  const { transactions, deleteTransaction, isLoading } = usePuterStorage();
+  const { transactions, addTransaction, deleteTransaction, isLoading } =
+    usePuterStorage();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this transaction?")) {
-      await deleteTransaction(id);
+  const handleDeleteConfirm = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteTransaction(deleteId);
+    } catch (error) {
+      console.error("Failed to delete:", error);
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -20,7 +32,7 @@ export function TransactionsPage() {
       className={`min-h-screen flex ${isDark ? "bg-zinc-950" : "bg-slate-50"}`}
     >
       <Sidebar />
-      <main className="flex-1 ml-64 min-h-screen">
+      <main className="flex-1 ml-64 min-h-screen relative pb-20">
         <TopNav />
 
         <div className="p-8 max-w-4xl mx-auto">
@@ -165,7 +177,7 @@ export function TransactionsPage() {
                         </td>
                         <td className="py-4 px-6 text-right">
                           <button
-                            onClick={() => handleDelete(tx.id)}
+                            onClick={() => setDeleteId(tx.id)}
                             className={`p-2 rounded-lg transition-all ${
                               isDark
                                 ? "text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10"
@@ -183,6 +195,89 @@ export function TransactionsPage() {
             </div>
           )}
         </div>
+
+        <TransactionForm onAdd={addTransaction} />
+
+        {/* Delete Confirmation Modal */}
+        <AnimatePresence>
+          {deleteId && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setDeleteId(null)}
+                className={`absolute inset-0 backdrop-blur-sm ${
+                  isDark ? "bg-black/60" : "bg-slate-900/40"
+                }`}
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className={`rounded-2xl p-6 w-full max-w-sm relative z-10 text-center ${
+                  isDark
+                    ? "bg-zinc-900 border border-zinc-800"
+                    : "bg-white shadow-2xl"
+                }`}
+              >
+                <button
+                  onClick={() => setDeleteId(null)}
+                  className={`absolute top-4 right-4 ${
+                    isDark
+                      ? "text-zinc-500 hover:text-zinc-300"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-rose-500/10 flex items-center justify-center">
+                  <AlertTriangle className="w-7 h-7 text-rose-500" />
+                </div>
+
+                <h3
+                  className={`text-lg font-bold mb-2 ${
+                    isDark ? "text-zinc-100" : "text-slate-900"
+                  }`}
+                >
+                  Delete Transaction?
+                </h3>
+                <p
+                  className={`text-sm mb-6 ${
+                    isDark ? "text-zinc-500" : "text-slate-500"
+                  }`}
+                >
+                  This action cannot be undone. The transaction will be
+                  permanently removed.
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteId(null)}
+                    className={`flex-1 py-2.5 font-medium rounded-xl transition-colors ${
+                      isDark
+                        ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteConfirm}
+                    disabled={isDeleting}
+                    className="flex-1 py-2.5 font-bold rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : null}
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

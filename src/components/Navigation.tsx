@@ -49,7 +49,7 @@ export function Sidebar() {
             <Link key={item.label} to={item.path}>
               <motion.div
                 whileHover={{ x: 5 }}
-                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                className={`flex items-center gap-3 my-7 p-3 rounded-xl cursor-pointer transition-all ${
                   isActive
                     ? isDark
                       ? "bg-indigo-500/20 text-indigo-400 font-medium"
@@ -74,7 +74,7 @@ export function Sidebar() {
             : "border-slate-100 text-slate-400"
         }`}
       >
-        © 2026 Teddy Dashboard
+        © Powered by <a href="https://puter.com" target="_blank">Puter</a>
       </div>
     </div>
   );

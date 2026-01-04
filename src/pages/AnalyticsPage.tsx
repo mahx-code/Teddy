@@ -144,10 +144,35 @@ export function AnalyticsPage() {
       trendMap.set(key, (trendMap.get(key) || 0) + t.amount);
     });
 
-    const trendData = Array.from(trendMap.entries()).map(([name, amount]) => ({
-      name,
-      amount,
-    }));
+    const trendData = Array.from(trendMap.entries())
+      .map(([name, amount]) => ({
+        name,
+        amount,
+      }))
+      .sort((a, b) => {
+        if (period === "daily" || period === "monthly") {
+          return parseInt(a.name) - parseInt(b.name);
+        } else if (period === "weekly") {
+          const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+          return days.indexOf(a.name) - days.indexOf(b.name);
+        } else {
+          const months = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          return months.indexOf(a.name) - months.indexOf(b.name);
+        }
+      });
 
     // Stats
     const avgPerDay =
@@ -299,7 +324,7 @@ export function AnalyticsPage() {
                   >
                     Spending Trend
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-75">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={analytics.trendData}>
                         <defs>
@@ -375,7 +400,7 @@ export function AnalyticsPage() {
                   >
                     Category Breakdown
                   </h3>
-                  <div className="h-[300px]">
+                  <div className="h-75">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -429,7 +454,7 @@ export function AnalyticsPage() {
                 >
                   Spending by Category
                 </h3>
-                <div className="h-[300px]">
+                <div className="h-75">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={analytics.pieData} layout="vertical">
                       <CartesianGrid

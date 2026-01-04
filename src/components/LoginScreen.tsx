@@ -49,7 +49,7 @@ export function LoginScreen() {
         <button
           onClick={handleSignIn}
           disabled={isLoading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/30 disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/30 disabled:opacity-70 cursor-pointera active:scale-95"
         >
           {isLoading ? (
             <>
