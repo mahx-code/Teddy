@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Transaction, Category } from "../types";
+import type { Transaction } from "../types";
 
 export function useExpenseStats(transactions: Transaction[]) {
   const now = new Date();

@@ -368,8 +368,8 @@ export function AnalyticsPage() {
                             }`,
                             borderRadius: "12px",
                           }}
-                          formatter={(value: number) => [
-                            `$${value.toFixed(2)}`,
+                          formatter={(value: number | undefined) => [
+                            `$${(value || 0).toFixed(2)}`,
                             "Amount",
                           ]}
                         />
@@ -427,8 +427,8 @@ export function AnalyticsPage() {
                             }`,
                             borderRadius: "12px",
                           }}
-                          formatter={(value: number) => [
-                            `$${value.toFixed(2)}`,
+                          formatter={(value: number | undefined) => [
+                            `$${(value || 0).toFixed(2)}`,
                             "Amount",
                           ]}
                         />
@@ -479,8 +479,8 @@ export function AnalyticsPage() {
                           border: `1px solid ${isDark ? "#27272a" : "#e2e8f0"}`,
                           borderRadius: "12px",
                         }}
-                        formatter={(value: number) => [
-                          `$${value.toFixed(2)}`,
+                        formatter={(value: number | undefined) => [
+                          `$${(value || 0).toFixed(2)}`,
                           "Amount",
                         ]}
                       />

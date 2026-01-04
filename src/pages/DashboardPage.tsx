@@ -18,8 +18,6 @@ import {
 import {
   AreaChart,
   Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -324,8 +322,8 @@ export function DashboardPage() {
                             }`,
                             borderRadius: "12px",
                           }}
-                          formatter={(v: number) => [
-                            `$${v.toFixed(2)}`,
+                          formatter={(v: number | undefined) => [
+                            `$${(v || 0).toFixed(2)}`,
                             "Spent",
                           ]}
                         />
@@ -387,7 +385,9 @@ export function DashboardPage() {
                             }`,
                             borderRadius: "12px",
                           }}
-                          formatter={(v: number) => [`$${v.toFixed(2)}`]}
+                          formatter={(v: number | undefined) => [
+                            `$${(v || 0).toFixed(2)}`,
+                          ]}
                         />
                       </PieChart>
                     </ResponsiveContainer>
