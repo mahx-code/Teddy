@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Sidebar, TopNav } from "../components/Navigation";
 import { TransactionForm } from "../components/TransactionForm";
 import { usePuterStorage } from "../hooks/usePuterStorage";
-import { Trash2, Loader2, Receipt, AlertTriangle, X } from "lucide-react";
+import {
+  Trash2,
+  Loader2,
+  Receipt,
+  AlertTriangle,
+  X,
+  Search,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function TransactionsPage() {
@@ -10,6 +18,18 @@ export function TransactionsPage() {
     usePuterStorage();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
+
+  const filteredTransactions = useMemo(() => {
+    if (!searchQuery) return transactions;
+    const lowerQuery = searchQuery.toLowerCase();
+    return transactions.filter(
+      (tx) =>
+        tx.category.toLowerCase().includes(lowerQuery) ||
+        (tx.description && tx.description.toLowerCase().includes(lowerQuery))
+    );
+  }, [transactions, searchQuery]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteId) return;
@@ -34,22 +54,36 @@ export function TransactionsPage() {
           <h1 className="text-3xl font-bold mb-2 text-[var(--color-text-primary)]">
             Transactions
           </h1>
-          <p className="mb-8 text-[var(--color-text-muted)]">
+          <p className="mb-4 text-[var(--color-text-muted)]">
             View and manage all your transactions.
           </p>
+
+          {searchQuery && (
+            <div className="mb-6 p-3 bg-[var(--color-bg-card)] border border-[var(--color-border-standard)] rounded-xl flex items-center gap-2 text-[var(--color-text-body)]">
+              <Search className="w-4 h-4 text-[var(--color-text-muted)]" />
+              <span>
+                Showing results for:{" "}
+                <span className="font-bold">"{searchQuery}"</span>
+              </span>
+            </div>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-10 h-10 text-[var(--color-status-info)] animate-spin" />
             </div>
-          ) : transactions.length === 0 ? (
+          ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-20 rounded-3xl border bg-[var(--color-bg-card)] border-[var(--color-border-standard)]">
               <Receipt className="w-16 h-16 mx-auto mb-4 text-[var(--color-text-placeholder)]" />
               <h3 className="text-xl font-bold mb-2 text-[var(--color-text-primary)]">
-                No transactions yet
+                {searchQuery
+                  ? "No matching transactions"
+                  : "No transactions yet"}
               </h3>
               <p className="text-[var(--color-text-muted)]">
-                Click the + button to add your first transaction.
+                {searchQuery
+                  ? "Try adjusting your search terms."
+                  : "Click the + button to add your first transaction."}
               </p>
             </div>
           ) : (
@@ -76,7 +110,7 @@ export function TransactionsPage() {
                 </thead>
                 <tbody>
                   <AnimatePresence>
-                    {transactions.map((tx) => (
+                    {filteredTransactions.map((tx) => (
                       <motion.tr
                         key={tx.id}
                         initial={{ opacity: 0 }}

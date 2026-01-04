@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import {
   LayoutDashboard,
   Wallet,
@@ -74,7 +75,10 @@ export function Sidebar() {
             : "border-slate-100 text-slate-400"
         }`}
       >
-        © Powered by <a href="https://docs.puter.com" target="_blank">Puter.js</a>
+        © Powered by{" "}
+        <a href="https://docs.puter.com" target="_blank">
+          Puter.js
+        </a>
       </div>
     </div>
   );
@@ -83,11 +87,19 @@ export function Sidebar() {
 export function TopNav() {
   const { user } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const isDark = resolvedTheme === "dark";
   const initials = user?.username?.slice(0, 2).toUpperCase() || "U";
 
   const toggleTheme = () => {
     setTheme(isDark ? "light" : "dark");
+  };
+
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigate(`/transactions?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -106,6 +118,9 @@ export function TopNav() {
         />
         <input
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
           placeholder="Search transactions..."
           className={`w-full border-none rounded-xl py-2.5 pl-10 pr-4 focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none ${
             isDark
